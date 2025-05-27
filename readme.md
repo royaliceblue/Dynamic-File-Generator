@@ -1,4 +1,4 @@
-# Large File Generator Script
+# Dynamic File Generator Script
 
 This Python script generates large, valid files in various formats (DOCX, XLSX, PPTX, PDF, PST, ZIP) to a specified size. It ensures each file is correctly structured so that it opens in its respective application.
 
@@ -20,6 +20,7 @@ python -m venv venv
 # macOS/Linux
 source venv/bin/activate
 # Windows
+powershell -ep bypass
 venv\Scripts\activate
 
 pip install -r requirements.txt
@@ -28,7 +29,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python script.py SIZE_MB -f FORMAT [OUTPUT]
+python script.py SIZE_MB -f FORMAT
 ```
 
 * `SIZE_MB`: Target file size in megabytes (integer).
@@ -40,37 +41,37 @@ python script.py SIZE_MB -f FORMAT [OUTPUT]
 * Generate a 50 MB Word document:
 
   ```bash
-  python script.py 50 -f docx report.docx
+  python script.py 50 -f docx
   ```
 
 * Generate a 100 MB Excel spreadsheet:
 
   ```bash
-  python script.py 100 -f xlsx data.xlsx
+  python script.py 100 -f xlsx
   ```
 
 * Generate a 10 MB PowerPoint presentation:
 
   ```bash
-  python script.py 10 -f pptx slides.pptx
+  python script.py 10 -f pptx
   ```
 
 * Generate a 5 MB PDF file:
 
   ```bash
-  python script.py 5 -f pdf document.pdf
+  python script.py 5 -f pdf
   ```
 
 * Generate a 7 MB Outlook PST file:
 
   ```bash
-  python script.py 7 -f pst mailbox.pst
+  python script.py 7 -f pst
   ```
 
 * Generate a 20 MB ZIP archive:
 
   ```bash
-  python script.py 20 -f zip archive.zip
+  python script.py 20 -f zip
   ```
 
 ## Notes
