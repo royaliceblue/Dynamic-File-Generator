@@ -1,153 +1,120 @@
 #!/usr/bin/env python3
-"""
-Generate large files in various formats (DOCX, XLSX, PPTX, PDF, PST, ZIP) with valid structure.
-
-Dependencies (install via pip):
-  python-docx, openpyxl, python-pptx, reportlab, Aspose.Email-for-Python-via-NET
-"""
+import argparse
 import os
 import io
-import argparse
-import sys
 import zipfile
+from zipfile import ZipInfo, ZIP_STORED
 
-# Document libraries
+# DOCX
 from docx import Document
+# XLSX
 from openpyxl import Workbook
+# PPTX
 from pptx import Presentation
+# PDF
 from reportlab.pdfgen import canvas
+# PST via Aspose
+from aspose.email.storage.pst import PersonalStorage, FileFormatVersion
 
-# PST generation via Aspose.Email-for-Python-via-NET
-try:
-    from aspose.email.storage.pst import PersonalStorage, FileFormatVersion
-except ImportError:
-    PersonalStorage = None
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate a dummy file of arbitrary size"
+    )
+    parser.add_argument(
+        "-f", "--format",
+        choices=["docx","xlsx","pptx","pdf","pst","zip"],
+        default="docx",
+        help="Which format to produce"
+    )
+    parser.add_argument(
+        "size",
+        type=int,
+        help="Target file size in megabytes"
+    )
+    parser.add_argument(
+        "output",
+        nargs="?",
+        help="Output filename (default: <format>_<size>.<ext>)"
+    )
 
+    # Use intermixed parser if available (allows mixing pos/opts freely)
+    if hasattr(parser, "parse_intermixed_args"):
+        return parser.parse_intermixed_args()
+    else:
+        return parser.parse_args()
 
-def pad_stream(buf: io.BytesIO, target_bytes: int) -> bytes:
-    data = buf.getvalue()
-    pad_len = target_bytes - len(data)
-    if pad_len < 0:
-        raise ValueError(f"Minimum file size {len(data)} exceeds target {target_bytes} bytes")
-    return data + (b"\0" * pad_len)
+def pad_file(path, size_mb):
+    target = size_mb * 1024 * 1024
+    current = os.path.getsize(path)
+    if current > target:
+        raise ValueError(f"{path!r} is already {current} bytes, exceeds {target}")
+    with open(path, "ab") as f:
+        f.write(b"\0" * (target - current))
 
-
-def generate_docx(size_mb: int, output: str):
-    buf = io.BytesIO()
+def generate_docx(size_mb, output):
     doc = Document()
-    doc.add_paragraph('Sample')
-    doc.save(buf)
-    data = pad_stream(buf, size_mb * 1024 * 1024)
-    with open(output, 'wb') as f:
-        f.write(data)
-    print(f"DOCX written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
+    doc.add_paragraph("")  
+    doc.save(output)
+    pad_file(output, size_mb)
 
-
-def generate_xlsx(size_mb: int, output: str):
-    buf = io.BytesIO()
+def generate_xlsx(size_mb, output):
     wb = Workbook()
-    ws = wb.active
-    ws['A1'] = 'Sample'
-    wb.save(buf)
-    data = pad_stream(buf, size_mb * 1024 * 1024)
-    with open(output, 'wb') as f:
-        f.write(data)
-    print(f"XLSX written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
+    wb.active.title = "Sheet1"
+    wb.save(output)
+    pad_file(output, size_mb)
 
-
-def generate_pptx(size_mb: int, output: str):
-    buf = io.BytesIO()
+def generate_pptx(size_mb, output):
     prs = Presentation()
-    prs.slides.add_slide(prs.slide_layouts[6])
-    prs.save(buf)
-    data = pad_stream(buf, size_mb * 1024 * 1024)
-    with open(output, 'wb') as f:
-        f.write(data)
-    print(f"PPTX written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
+    prs.slides.add_slide(prs.slide_layouts[0])
+    prs.save(output)
+    pad_file(output, size_mb)
 
-
-def generate_pdf(size_mb: int, output: str):
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf)
-    c.drawString(100, 750, 'Sample')
+def generate_pdf(size_mb, output):
+    c = canvas.Canvas(output)
+    c.drawString(100, 750, "")
     c.showPage()
     c.save()
-    data = pad_stream(buf, size_mb * 1024 * 1024)
-    with open(output, 'wb') as f:
-        f.write(data)
-    print(f"PDF written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
+    pad_file(output, size_mb)
 
-
-def generate_pst(size_mb: int, output: str):
-    if PersonalStorage is None:
-        print("Error: Aspose.Email-for-Python-via-NET is required for PST generation", file=sys.stderr)
-        sys.exit(1)
-    # Create a new Unicode PST file
+def generate_pst(size_mb, output):
     with PersonalStorage.create(output, FileFormatVersion.UNICODE) as pst:
         pst.root_folder.add_sub_folder("Inbox")
-    # Pad file to target size
-    current = os.path.getsize(output)
-    target = size_mb * 1024 * 1024
-    pad_len = target - current
-    if pad_len < 0:
-        raise ValueError(f"Generated PST size {current} exceeds target {target}")
-    with open(output, 'ab') as f:
-        f.write(b"\0" * pad_len)
-    print(f"PST written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
+    pad_file(output, size_mb)
 
-
-def generate_zip(size_mb: int, output: str):
-    """
-    Generate a valid ZIP containing a dummy file and a large pad.bin entry to reach target size.
-    """
-    target = size_mb * 1024 * 1024
-    # Create zip with a small dummy.txt
-    with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_STORED) as z:
-        z.writestr('dummy.txt', 'Sample')
-
-    # Determine how many bytes to pad
-    current = os.path.getsize(output)
-    pad_bytes = target - current
-    if pad_bytes < 0:
-        raise ValueError(f"Generated ZIP size {current} exceeds target {target}")
-
-    # Append a pad.bin entry stored without compression
-    with zipfile.ZipFile(output, 'a', compression=zipfile.ZIP_STORED) as z:
-        info = zipfile.ZipInfo('pad.bin')
-        info.compress_type = zipfile.ZIP_STORED
-        with z.open(info, 'w') as f:
-            chunk = b"\0" * (1024 * 1024)
-            full_chunks = pad_bytes // len(chunk)
-            for _ in range(full_chunks):
-                f.write(chunk)
-            # write remaining bytes
-            remainder = pad_bytes - full_chunks * len(chunk)
-            if remainder:
-                f.write(b"\0" * remainder)
-
-    print(f"ZIP written '{output}' (~{os.path.getsize(output)/(1024*1024):.2f} MB)")
-
+def generate_zip(size_mb, output):
+    # create minimal zip
+    with zipfile.ZipFile(output, "w", compression=ZIP_STORED) as z:
+        z.writestr("dummy.txt", "placeholder")
+    # append pad.bin
+    with zipfile.ZipFile(output, "a", compression=ZIP_STORED) as z:
+        info = ZipInfo("pad.bin")
+        info.compress_type = ZIP_STORED
+        pad_bytes = size_mb*1024*1024 - os.path.getsize(output)
+        chunk = 1024*1024
+        full, rem = divmod(pad_bytes, chunk)
+        with z.open(info, "w") as f:
+            for _ in range(full):
+                f.write(b"\0" * chunk)
+            if rem:
+                f.write(b"\0" * rem)
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate large valid files of various formats.")
-    parser.add_argument('size', type=int, help='Target size in megabytes')
-    parser.add_argument('-f', '--format', choices=['docx','xlsx','pptx','pdf','pst','zip'], default='docx', help='File format')
-    parser.add_argument('output', nargs='?', help='Output filename')
-    args = parser.parse_args()
-    out = args.output or f"output.{args.format}"
+    args = parse_args()
+    size_mb = args.size
+    fmt     = args.format
+    out     = args.output or f"{fmt}_{size_mb}.{fmt}"
 
-    if args.format == 'docx':
-        generate_docx(args.size, out)
-    elif args.format == 'xlsx':
-        generate_xlsx(args.size, out)
-    elif args.format == 'pptx':
-        generate_pptx(args.size, out)
-    elif args.format == 'pdf':
-        generate_pdf(args.size, out)
-    elif args.format == 'pst':
-        generate_pst(args.size, out)
-    elif args.format == 'zip':
-        generate_zip(args.size, out)
+    dispatch = {
+        "docx": generate_docx,
+        "xlsx": generate_xlsx,
+        "pptx": generate_pptx,
+        "pdf":  generate_pdf,
+        "pst":  generate_pst,
+        "zip":  generate_zip,
+    }
 
-if __name__ == '__main__':
+    dispatch[fmt](size_mb, out)
+    print(f"Generated {out!r} ({size_mb} MB, format={fmt})")
+
+if __name__ == "__main__":
     main()

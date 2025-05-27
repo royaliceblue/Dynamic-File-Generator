@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python script.py SIZE_MB -f FORMAT
+python script.py SIZE_MB -f FORMAT [OUTPUT]
 ```
 
 * `SIZE_MB`: Target file size in megabytes (integer).
@@ -41,37 +41,37 @@ python script.py SIZE_MB -f FORMAT
 * Generate a 50 MB Word document:
 
   ```bash
-  python script.py 50 -f docx
+  python script.py 50 -f docx report.docx
   ```
 
 * Generate a 100 MB Excel spreadsheet:
 
   ```bash
-  python script.py 100 -f xlsx
+  python script.py 100 -f xlsx data.xlsx
   ```
 
 * Generate a 10 MB PowerPoint presentation:
 
   ```bash
-  python script.py 10 -f pptx
+  python script.py 10 -f pptx slides.pptx
   ```
 
 * Generate a 5 MB PDF file:
 
   ```bash
-  python script.py 5 -f pdf
+  python script.py 5 -f pdf document.pdf
   ```
 
 * Generate a 7 MB Outlook PST file:
 
   ```bash
-  python script.py 7 -f pst
+  python script.py 7 -f pst mailbox.pst
   ```
 
 * Generate a 20 MB ZIP archive:
 
   ```bash
-  python script.py 20 -f zip
+  python script.py 20 -f zip archive.zip
   ```
 
 ## Notes
