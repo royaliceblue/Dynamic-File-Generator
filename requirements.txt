@@ -1,0 +1,5 @@
+python-docx
+openpyxl
+python-pptx
+reportlab
+Aspose.Email-for-Python-via-NET
