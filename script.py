@@ -14,13 +14,26 @@ from reportlab.pdfgen import canvas
 
 # PST via Aspose.Email-for-Python-via-NET
 from aspose.email.storage.pst import PersonalStorage, FileFormatVersion
+import textwrap
 
 # Regex to parse sizes like '150KB', '2.5MB', or plain number (MB default)
 _UNIT_RE = re.compile(r'^(?P<value>\d+(\.\d+)?)(?P<unit>KB|MB)?$', re.IGNORECASE)
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description="Generate a valid dummy file of arbitrary size (KB or MB)"
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Generate a valid dummy file of arbitrary size (KB or MB)",
+        epilog=textwrap.dedent('''\
+Examples:
+                               
+  python script.py 100KB -f docx small.docx
+
+  python script.py 512KB -f pdf report.pdf
+
+  python script.py 1.5MB -f xlsx workbook.xlsx
+
+  python script.py 5MB -f pst mailbox.pst
+''')
     )
     p.add_argument(
         "-f", "--format",
