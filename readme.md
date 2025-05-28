@@ -1,6 +1,6 @@
-# Dynamic File Generator Script
+# Dynamic File Generator
 
-This Python script generates large, valid files in various formats (DOCX, XLSX, PPTX, PDF, PST, ZIP) to a specified size. It ensures each file is correctly structured so that it opens in its respective application.
+This Python script generates arbitrary, valid files in various formats (DOCX, XLSX, PPTX, PDF, PST, ZIP) to a specified size. It ensures each file is correctly structured so that it opens in its respective application.
 
 ## Supported Formats
 
@@ -26,59 +26,51 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+- Ensure you have Python 3.7 and above  
+
 ## Usage
 
 ```bash
-python script.py SIZE_MB -f FORMAT [OUTPUT]
-```
+usage: script.py [-h] [-f {docx,xlsx,pptx,pdf,pst,zip}] size [output]
 
-* `SIZE_MB`: Target file size in megabytes (integer).
-* `-f FORMAT`: File format (`docx`, `xlsx`, `pptx`, `pdf`, `pst`, `zip`). Defaults to `docx`.
-* `OUTPUT`: (optional) Output filename. Defaults to `output.<format>`.
+positional arguments:
+  size            target size (e.g. 150KB, 2.5MB, or 10 for 10MB)
+  output          optional filename (default: <format>_<size>.<ext>)
+
+options:
+  -h, --help      show this help message and exit
+  -f, --format    file format to produce (docx, xlsx, pptx, pdf, pst, zip) (default: docx)
+```
 
 ### Examples
 
-* Generate a 50 MB Word document:
+#### Generating in KB
 
-  ```bash
-  python script.py 50 -f docx report.docx
-  ```
+```
+# 100 KB Word document
+python script.py 100KB -f docx small.docx
 
-* Generate a 100 MB Excel spreadsheet:
+# 512 KB PDF
+python script.py 512KB -f pdf report.pdf
 
-  ```bash
-  python script.py 100 -f xlsx data.xlsx
-  ```
+# 8 KB ZIP archive
+python script.py 8KB -f zip archive.zip
+```
 
-* Generate a 10 MB PowerPoint presentation:
+#### Generating in MB
 
-  ```bash
-  python script.py 10 -f pptx slides.pptx
-  ```
+```
+# 1.5 MB Excel workbook
+python script.py 1.5MB -f xlsx workbook.xlsx
 
-* Generate a 5 MB PDF file:
+# 10 MB PowerPoint deck (default name: pptx_10.pptx)
+python script.py 10 -f pptx
 
-  ```bash
-  python script.py 5 -f pdf document.pdf
-  ```
-
-* Generate a 7 MB Outlook PST file:
-
-  ```bash
-  python script.py 7 -f pst mailbox.pst
-  ```
-
-* Generate a 20 MB ZIP archive:
-
-  ```bash
-  python script.py 20 -f zip archive.zip
-  ```
+# 5 MB Outlook PST mailbox
+python script.py 5MB -f pst mailbox.pst
+```
 
 ## Notes
 
 * **PST generation** requires [Aspose.Email-for-Python-via-NET](https://pypi.org/project/Aspose.Email-for-Python-via-NET/) and a Windows environment.
 * All other formats work cross-platform.
-
-## License
-
-MIT License. Feel free to modify and distribute.
